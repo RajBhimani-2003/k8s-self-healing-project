@@ -2,19 +2,20 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'rajbhimani18/self-healing-app:latest'
+        IMAGE = 'rajbhimani18/self-healing-app:latest'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/RajBhimani-2003/k8s-self-healing-project.git'
+                git branch: 'main',
+                    url: 'https://github.com/RajBhimani-2003/k8s-self-healing-project.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh 'docker build -t $IMAGE .'
             }
         }
 
@@ -26,7 +27,7 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker push $IMAGE_NAME'
+                    sh 'docker push $IMAGE'
                 }
             }
         }
@@ -40,8 +41,10 @@ pipeline {
 
         stage('Verify Deployment') {
             steps {
-                sh 'kubectl rollout status deployment/self-healing-app'
-                sh 'kubectl get pods'
+                sh '''
+                    kubectl rollout status deployment/self-healing-app
+                    kubectl get pods
+                '''
             }
         }
     }
